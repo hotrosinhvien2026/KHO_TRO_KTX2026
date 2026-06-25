@@ -5,8 +5,8 @@ import { useToast } from '../components/ui/Toast'
 import { LoadingPage } from '../components/ui/Spinner'
 import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
-import { KhuTroForm } from '../components/forms/KhuTroForm'
-import { PhongForm } from '../components/forms/PhongForm'
+import { KhuTroForm } from '../components/KhuTroForm'
+import { PhongForm } from '../components/PhongForm'
 import {
   KHU_VUC_LIST,
   LOAI_PHONG_LIST,
