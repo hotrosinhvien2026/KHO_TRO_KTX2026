@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useToast } from './ui/Toast'
 import { Modal } from './ui/Modal'
-import { KHU_VUC_LIST } from '../lib/constants'
-import type { ChuNha, Ktx, TrangThaiKtx} from '../lib/types'
+import { DOI_TUONG_LIST, KHU_VUC_LIST, TRANG_THAI_KTX } from '../lib/constants'
+import type { ChuNha, Ktx, TrangThaiKtx } from '../lib/types'
 
 /** Form thêm/sửa KTX (chỉ admin). */
 export function KtxForm({
