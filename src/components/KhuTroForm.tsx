@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { supabase } from '../../lib/supabase'
-import { useToast } from '../ui/Toast'
-import { Modal } from '../ui/Modal'
-import { KHU_VUC_LIST } from '../../lib/constants'
-import type { ChuNha, KhuTro } from '../../lib/types'
+import { supabase } from '../lib/supabase'
+import { useToast } from './ui/Toast'
+import { Modal } from './ui/Modal'
+import { KHU_VUC_LIST } from '../lib/constants'
+import type { ChuNha, KhuTro } from '../lib/types'
 
 /**
  * Form thêm/sửa KHU TRỌ (chỉ admin dùng).
