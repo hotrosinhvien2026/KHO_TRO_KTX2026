@@ -1,20 +1,25 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../components/ui/Toast'
 import { LoadingPage } from '../components/ui/Spinner'
 import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
+import { KtxForm } from '../components/forms/KtxForm'
 import { DOI_TUONG_LIST, KHU_VUC_LIST, TRANG_THAI_KTX } from '../lib/constants'
-import { driveImageUrl, formatDaiGia, formatNgayGio, formatVND } from '../lib/format'
+import { driveImageUrl, formatCoc, formatDaiGia, formatNgayGio } from '../lib/format'
 import type { ChuNha, Ktx, LichSu, TrangThaiKtx } from '../lib/types'
 
 type KtxFull = Ktx & { chu_nha: ChuNha | null }
 
 export default function KtxPage() {
   const { toast } = useToast()
+  const { isAdmin } = useAuth()
   const [list, setList] = useState<KtxFull[]>([])
+  const [chuNhaList, setChuNhaList] = useState<ChuNha[]>([])
   const [loading, setLoading] = useState(true)
   const [detail, setDetail] = useState<KtxFull | null>(null)
+  const [editing, setEditing] = useState<Partial<Ktx> | null>(null)
 
   const [search, setSearch] = useState('')
   const [fKhuVuc, setFKhuVuc] = useState('')
@@ -24,13 +29,25 @@ export default function KtxPage() {
 
   const load = async () => {
     setLoading(true)
-    const { data } = await supabase.from('ktx').select('*, chu_nha(*)').order('ten_ktx')
+    const [{ data }, { data: cn }] = await Promise.all([
+      supabase.from('ktx').select('*, chu_nha(*)').order('ten_ktx'),
+      supabase.from('chu_nha').select('*').order('ten_chu'),
+    ])
     setList((data as KtxFull[]) ?? [])
+    setChuNhaList((cn as ChuNha[]) ?? [])
     setLoading(false)
   }
   useEffect(() => {
     load()
   }, [])
+
+  const deleteKtx = async (k: KtxFull) => {
+    if (!confirm(`Xóa KTX "${k.ten_ktx}"? Hành động không thể hoàn tác.`)) return
+    const { error } = await supabase.from('ktx').delete().eq('id', k.id)
+    if (error) return toast('Lỗi xóa: ' + error.message, 'error')
+    toast('Đã xóa ' + k.ten_ktx)
+    load()
+  }
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
@@ -59,9 +76,16 @@ export default function KtxPage() {
 
   return (
     <div>
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Ký túc xá</h1>
-        <p className="text-sm text-gray-500">{filtered.length} cơ sở khớp bộ lọc.</p>
+      <div className="mb-4 flex items-start justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Ký túc xá</h1>
+          <p className="text-sm text-gray-500">{filtered.length} cơ sở khớp bộ lọc.</p>
+        </div>
+        {isAdmin && (
+          <button onClick={() => setEditing({})} className="btn-primary shrink-0">
+            + Thêm KTX
+          </button>
+        )}
       </div>
 
       <div className="card mb-5 space-y-3">
@@ -145,9 +169,21 @@ export default function KtxPage() {
                   </select>
                 </td>
                 <td className="px-4 py-3">
-                  <button onClick={() => setDetail(k)} className="btn-secondary !py-1 text-xs">
-                    Chi tiết
-                  </button>
+                  <div className="flex gap-2">
+                    <button onClick={() => setDetail(k)} className="btn-secondary !py-1 text-xs">
+                      Chi tiết
+                    </button>
+                    {isAdmin && (
+                      <>
+                        <button onClick={() => setEditing(k)} className="text-xs text-brand-600 hover:underline">
+                          Sửa
+                        </button>
+                        <button onClick={() => deleteKtx(k)} className="text-xs text-red-600 hover:underline">
+                          Xóa
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -187,11 +223,33 @@ export default function KtxPage() {
                 Chi tiết
               </button>
             </div>
+            {isAdmin && (
+              <div className="mt-2 flex justify-end gap-3 text-xs">
+                <button onClick={() => setEditing(k)} className="text-brand-600 hover:underline">
+                  Sửa
+                </button>
+                <button onClick={() => deleteKtx(k)} className="text-red-600 hover:underline">
+                  Xóa
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>
 
       {detail && <KtxDetailModal ktx={detail} onClose={() => setDetail(null)} />}
+
+      {editing && (
+        <KtxForm
+          initial={editing}
+          chuNhaList={chuNhaList}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null)
+            load()
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -216,7 +274,7 @@ function KtxDetailModal({ ktx: k, onClose }: { ktx: KtxFull; onClose: () => void
     const lines = [
       `🛏️ ${k.ten_ktx}${k.ma_ktx ? ` (${k.ma_ktx})` : ''}`,
       `📍 ${k.dia_chi ?? ''}${k.khu_vuc ? ` (${k.khu_vuc})` : ''}`,
-      `💰 Giá: ${formatDaiGia(k.gia_tu, k.gia_den)}${k.coc_thang ? ` · Cọc: ${formatVND(k.coc_thang)}` : ''}`,
+      `💰 Giá: ${formatDaiGia(k.gia_tu, k.gia_den)}${k.coc_thang ? ` · Cọc: ${formatCoc(k.coc_thang)}` : ''}`,
       k.doi_tuong ? `👥 Đối tượng: ${k.doi_tuong}` : '',
       k.ghi_chu_slot ? `🔢 Chỗ trống: ${k.ghi_chu_slot}` : '',
       k.tien_ich ? `✨ Tiện ích: ${k.tien_ich}` : '',
@@ -250,7 +308,7 @@ function KtxDetailModal({ ktx: k, onClose }: { ktx: KtxFull; onClose: () => void
           <Info label="Khu vực" value={k.khu_vuc ?? '—'} />
           <Info label="Đối tượng" value={k.doi_tuong ?? '—'} />
           <Info label="Chỗ trống" value={k.ghi_chu_slot ?? '—'} />
-          <Info label="Cọc" value={formatVND(k.coc_thang)} />
+          <Info label="Cọc" value={formatCoc(k.coc_thang)} />
           <Info label="Chủ/Quản lý" value={k.chu_nha ? `${k.chu_nha.ten_chu} (${k.chu_nha.sdt ?? ''})` : '—'} />
           <Info label="Địa chỉ" value={k.dia_chi ?? '—'} full />
           {k.tien_ich && <Info label="Tiện ích" value={k.tien_ich} full />}
