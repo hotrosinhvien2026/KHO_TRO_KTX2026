@@ -43,3 +43,8 @@ export function driveImageUrl(link: string | null | undefined): string | null {
   if (m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1000`
   return link // có thể đã là link ảnh trực tiếp
 }
+/** Tiền cọc: hiển thị như VND, rỗng thì "—". */
+export function formatCoc(n: number | null | undefined): string {
+  if (n == null) return '—'
+  return formatVND(n)
+}
