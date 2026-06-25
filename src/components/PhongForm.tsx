@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { supabase } from '../../lib/supabase'
-import { useToast } from '../ui/Toast'
-import { Modal } from '../ui/Modal'
-import { LOAI_PHONG_LIST, TIEN_ICH_PHONG, TRANG_THAI_PHONG } from '../../lib/constants'
-import type { KhuTro, Phong, TrangThaiPhong } from '../../lib/types'
-
+import { supabase } from '../lib/supabase'
+import { useToast } from './ui/Toast'
+import { Modal } from './ui/Modal'
+import { LOAI_PHONG_LIST, TIEN_ICH_PHONG, TRANG_THAI_PHONG } from '../lib/constants'
+import type { KhuTro, Phong, TrangThaiPhong  } from '../lib/types'
 /**
  * Form thêm/sửa PHÒNG cụ thể (chỉ admin). Phòng luôn thuộc 1 khu trọ.
  * khuList để chọn khu khi thêm; khi sửa thì khu cố định theo phòng.
